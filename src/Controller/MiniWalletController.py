@@ -700,7 +700,7 @@ class WithdrawalsWalletAPI(Resource):
             datas = {
                 "status": "success",
                 "data": {
-                    "deposit": output
+                    "withdrawal": output
                 }
             }
 
