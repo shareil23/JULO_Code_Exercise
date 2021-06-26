@@ -1,0 +1,60 @@
+# Project Name  : JULO Code test
+# Services Name : Mini Wallet
+# Maintainer    : Derandi Hermanda
+
+version: '3'
+
+volumes:
+  mini_wallet_services_data: {}
+
+networks:
+   mini_wallet_services-net:
+      external: false
+
+services:
+  julo_mini_wallet_servcies:
+    container_name: "julo_mini_wallet_servcies"
+    build:
+      context: .
+      dockerfile: ./src/Config/Dockerfile
+    restart: on-failure
+    networks:
+      - mini_wallet_services-net
+    volumes:
+      - .:/usr/src/app/
+#    deploy:
+#      replicas: 0
+#      mode: replicated
+    command: /usr/local/bin/gunicorn --bind=0.0.0.0:5000 -w 3 --worker-class="egg:meinheld#gunicorn_worker" app:app --timeout 600
+
+  julo_postgres_mini_wallet_servcies:
+    container_name: "julo_postgres_mini_wallet_servcies"
+    image: postgres:11-alpine
+    restart: on-failure
+    env_file: src/Config/db.env
+    ports:
+      - '7000:5432'
+    networks:
+      - mini_wallet_services-net
+    volumes:
+      - mini_wallet_services_data:/var/lib/postgresql/data
+
+  julo_reverseproxy_mini_wallet_services:
+    container_name: "julo_reverseproxy_mini_wallet_services"
+    image: nginx:latest
+    volumes:
+      - ./src/Config/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - mini_wallet_services-net
+    depends_on:
+      - julo_mini_wallet_servcies
+    ports:
+      - '8000:5000'
+    restart: always
+
+  julo_redis_mini_wallet_services:
+    container_name: "julo_redis_mini_wallet_services"
+    image: redis:alpine
+    restart: on-failure
+    networks:
+      - mini_wallet_services-net
